@@ -29,18 +29,13 @@ let path = {
 let { src, dest } = require("gulp"), // <-connect plugins
   gulp = require("gulp"),
   browsersync = require("browser-sync").create(),
-  fileinclude = require("gulp-file-include"),
   del = require("del"),
-  scss = require("gulp-sass"),
-  autoprefixer = require("gulp-autoprefixer"),
-  sourcemaps = require("gulp-sourcemaps"),
+  fileinclude = require("gulp-file-include"),
   groupMedia = require("gulp-group-css-media-queries"),
   cleanCSS = require("gulp-clean-css"),
-  rename = require("gulp-rename"),
   uglify = require("gulp-uglify-es").default,
-  imagemin = require("gulp-imagemin"),
-  plumber = require("gulp-plumber"),
-  notify = require("gulp-notify");
+  notify = require("gulp-notify"),
+  plugins = require("gulp-load-plugins")();
 
 // init localserver
 function browserSync(params) {
@@ -63,16 +58,16 @@ function html() {
 // task to build scss
 function css() {
   return src(path.src.css)
-    .pipe(plumber())
-    .pipe(sourcemaps.init())
+    .pipe(plugins.plumber())
+    .pipe(plugins.sourcemaps.init())
     .pipe(
-      scss({
+      plugins.sass({
         outputStyle: "expanded",
       })
     )
     .pipe(groupMedia())
     .pipe(
-      autoprefixer({
+      plugins.autoprefixer({
         overrideBrowserslist: ["last 5 version"],
         cascade: true,
       })
@@ -80,11 +75,16 @@ function css() {
     .pipe(dest(path.build.css))
     .pipe(cleanCSS({ compatibility: "ie8" }))
     .pipe(
-      rename({
+      plugins.uncss({
+        html: ["src/**/*.html"],
+      })
+    )
+    .pipe(
+      plugins.rename({
         extname: ".min.css",
       })
     )
-    .pipe(sourcemaps.write())
+    .pipe(plugins.sourcemaps.write())
     .pipe(dest(path.build.css))
     .pipe(browsersync.stream());
 }
@@ -99,7 +99,7 @@ function js() {
     .pipe(dest(path.build.js))
     .pipe(uglify())
     .pipe(
-      rename({
+      plugins.rename({
         extname: ".min.js",
       })
     )
@@ -111,7 +111,7 @@ function js() {
 function images() {
   return src(path.src.img)
     .pipe(
-      imagemin({
+      plugins.imagemin({
         progressive: true,
         svgoPlugins: [
           {
