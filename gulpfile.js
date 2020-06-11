@@ -26,6 +26,8 @@ let path = {
   clean: "./" + project_folder + "/",
 };
 
+let sassPaths = "node_modules/foundation-sites/scss";
+
 let { src, dest } = require("gulp"), // <-connect plugins
   gulp = require("gulp"),
   browsersync = require("browser-sync").create(),
@@ -61,9 +63,12 @@ function css() {
     .pipe(plugins.plumber())
     .pipe(plugins.sourcemaps.init())
     .pipe(
-      plugins.sass({
-        outputStyle: "expanded",
-      })
+      plugins
+        .sass({
+          includePaths: sassPaths,
+          outputStyle: "compressed",
+        })
+        .on("error", notify.onError("SCSS-Error: <%= error.message %>"))
     )
     .pipe(groupMedia())
     .pipe(

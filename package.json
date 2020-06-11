@@ -25,5 +25,8 @@
     "gulp-sourcemaps": "^2.6.5",
     "gulp-uglify-es": "^2.0.0",
     "gulp-uncss": "^1.0.6"
+  },
+  "dependencies": {
+    "foundation-sites": "^6.6.3"
   }
 }
