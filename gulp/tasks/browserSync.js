@@ -3,7 +3,7 @@ module.exports = function () {
   $.gulp.task("browserSync", function () {
     $.browsersync.init({
       server: {
-        baseDir: "./" + $.project_folder + "/",
+        baseDir: "./" + $.projectFolder + "/",
       },
       port: 3000,
       notify: false,

@@ -25,7 +25,7 @@ module.exports = function () {
       )
       .pipe(
         $.plugins.uncss({
-          html: ["src/**/*.html"],
+          html: $.path.src.html,
         })
       )
       .pipe($.gulp.dest($.path.build.css))

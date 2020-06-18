@@ -21,4 +21,13 @@ module.exports = function () {
       .pipe($.gulp.dest($.path.build.js))
       .pipe($.browsersync.stream());
   });
+  // <- task to build libs
+  $.gulp.task("js:lib", function () {
+    return $.gulp
+      .src($.jqueryPaths)
+      
+      .pipe($.gulp.dest($.path.build.lib))
+      .pipe($.browsersync.stream());
+  });
+
 };

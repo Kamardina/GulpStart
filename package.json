@@ -27,6 +27,7 @@
     "gulp-uncss": "^1.0.6"
   },
   "dependencies": {
-    "foundation-sites": "^6.6.3"
+    "foundation-sites": "^6.6.3",
+    "jquery": "^3.5.1"
   }
 }
