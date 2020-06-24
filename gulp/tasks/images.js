@@ -1,10 +1,11 @@
 // task to build images
-module.exports = function () {
-  $.gulp.task("images", function () {
-    return $.gulp
-      .src($.path.src.img)
+module.exports = function (gulp, plugins, config) {
+  return function (cb) {
+    gulp
+      .src(config.path.src.img)
+      .pipe(plugins.plumber())
       .pipe(
-        $.plugins.imagemin({
+        plugins.imagemin({
           progressive: true,
           svgoPlugins: [
             {
@@ -15,7 +16,8 @@ module.exports = function () {
           optimizationLevel: 3,
         })
       )
-      .pipe($.gulp.dest($.path.build.img))
-      .pipe($.browsersync.stream());
-  });
+      .pipe(gulp.dest(config.path.dest.img));
+
+    cb();
+  };
 };
