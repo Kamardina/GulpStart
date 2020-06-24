@@ -1,152 +1,81 @@
-let project_folder = require("path").basename(__dirname); // <-folder to return the result
-let source_folder = "src"; // <-source folder
+const gulp = require("gulp");
+const plugins = require("gulp-load-plugins")();
+plugins.del = require("del");
+plugins.browserSync = require("browser-sync").create();
 
-let path = {
-  build: {
-    // paths to build
-    html: project_folder + "/",
-    css: project_folder + "/css/",
-    js: project_folder + "/js/",
-    img: project_folder + "/img/",
+const destinationFolder = "./dest/"; // <-folder to return the result
+const sourceFolder = "./src"; // <-source folder
+
+const config = {
+  destinationFolder, // <-folder to return the result
+  sourceFolder, // <-source folder
+  path: {
+    dest: {
+      // paths to build
+      html: destinationFolder + "/",
+      css: destinationFolder + "/css/",
+      js: destinationFolder + "/js/",
+      img: destinationFolder + "/img/",
+      lib: destinationFolder + "/lib",
+    },
+    src: {
+      // paths to source files
+      html: [sourceFolder + "/*.html", "!" + sourceFolder + "/_*.html"],
+      sass: sourceFolder + "/scss/style.scss",
+      js: sourceFolder + "/js/scripts.js",
+      img: sourceFolder + "/img/**/*.{jpg,png,svg,gif,ico,webp}",
+    },
+    watch: {
+      // paths to modify files
+      html: sourceFolder + "/**/*.html",
+      sass: sourceFolder + "/scss/**/*.scss",
+      js: sourceFolder + "/js/**/*.js",
+      img: sourceFolder + "/img/**/*.{jpg,png,svg,gif,ico,webp}",
+    },
+    clean: destinationFolder,
+    libsSCSS: ["node_modules/foundation-sites/scss"],
+    libsJS: ["node_modules/jquery/dist/jquery.min.js"],
   },
-  src: {
-    // paths to source files
-    html: [source_folder + "/*.html", "!" + source_folder + "/_*.html"],
-    css: source_folder + "/scss/style.scss",
-    js: source_folder + "/js/script.js",
-    img: source_folder + "/img/**/*.{jpg,png,svg,gif,ico,webp}",
-  },
-  watch: {
-    // paths to modify files
-    html: source_folder + "/**/*.html",
-    css: source_folder + "/scss/**/*.scss",
-    js: source_folder + "/js/**/*.js",
-    img: source_folder + "/img/**/*.{jpg,png,svg,gif,ico,webp}",
-  },
-  clean: "./" + project_folder + "/",
 };
 
-let { src, dest } = require("gulp"), // <-connect plugins
-  gulp = require("gulp"),
-  browsersync = require("browser-sync").create(),
-  fileinclude = require("gulp-file-include"),
-  del = require("del"),
-  scss = require("gulp-sass"),
-  autoprefixer = require("gulp-autoprefixer"),
-  sourcemaps = require("gulp-sourcemaps"),
-  groupMedia = require("gulp-group-css-media-queries"),
-  cleanCSS = require("gulp-clean-css"),
-  rename = require("gulp-rename"),
-  uglify = require("gulp-uglify-es").default,
-  imagemin = require("gulp-imagemin"),
-  plumber = require("gulp-plumber"),
-  notify = require("gulp-notify");
+gulp.task("clean", require("./gulp/tasks/clean")(plugins, config));
 
-// init localserver
-function browserSync(params) {
-  browsersync.init({
+gulp.task("sass", require("./gulp/tasks/sass")(gulp, plugins, config));
+
+gulp.task("html", require("./gulp/tasks/html")(gulp, plugins, config));
+
+gulp.task(
+  "javascript",
+  require("./gulp/tasks/javascript")(gulp, plugins, config)
+);
+
+gulp.task("images", require("./gulp/tasks/images")(gulp, plugins, config));
+
+gulp.task(
+  "build",
+  gulp.series("clean", gulp.parallel("javascript", "sass", "html", "images"))
+);
+
+gulp.task("watch", function () {
+  plugins.browserSync.init({
     server: {
-      baseDir: "./" + project_folder + "/",
+      baseDir: destinationFolder,
     },
     port: 3000,
     notify: false,
   });
-}
-// task to build html
-function html() {
-  return src(path.src.html)
-    .pipe(fileinclude())
-    .pipe(dest(path.build.html))
-    .pipe(browsersync.stream());
-}
+  gulp
+    .watch([config.path.watch.html], gulp.series("html"))
+    .on("change", plugins.browserSync.reload);
+  gulp
+    .watch([config.path.watch.sass], gulp.series("sass"))
+    .on("change", plugins.browserSync.reload);
+  gulp
+    .watch([config.path.watch.js], gulp.series("javascript"))
+    .on("change", plugins.browserSync.reload);
+  gulp
+    .watch([config.path.watch.img], gulp.series("images"))
+    .on("change", plugins.browserSync.reload);
+});
 
-// task to build scss
-function css() {
-  return src(path.src.css)
-    .pipe(plumber())
-    .pipe(sourcemaps.init())
-    .pipe(
-      scss({
-        outputStyle: "expanded",
-      })
-    )
-    .pipe(groupMedia())
-    .pipe(
-      autoprefixer({
-        overrideBrowserslist: ["last 5 version"],
-        cascade: true,
-      })
-    )
-    .pipe(dest(path.build.css))
-    .pipe(cleanCSS({ compatibility: "ie8" }))
-    .pipe(
-      rename({
-        extname: ".min.css",
-      })
-    )
-    .pipe(sourcemaps.write())
-    .pipe(dest(path.build.css))
-    .pipe(browsersync.stream());
-}
-
-// task to build js
-function js() {
-  return src(path.src.js)
-    .pipe(fileinclude())
-    .pipe(
-      uglify().on("error", notify.onError("JS-Error: <%= error.message %>"))
-    )
-    .pipe(dest(path.build.js))
-    .pipe(uglify())
-    .pipe(
-      rename({
-        extname: ".min.js",
-      })
-    )
-    .pipe(dest(path.build.js))
-    .pipe(browsersync.stream());
-}
-
-// task to build images
-function images() {
-  return src(path.src.img)
-    .pipe(
-      imagemin({
-        progressive: true,
-        svgoPlugins: [
-          {
-            removeViewBox: false,
-          },
-        ],
-        interlaced: true,
-        optimizationLevel: 3,
-      })
-    )
-    .pipe(dest(path.build.img))
-    .pipe(browsersync.stream());
-}
-
-// watch the specified files
-function watchFiles(params) {
-  gulp.watch([path.watch.html], html);
-  gulp.watch([path.watch.css], css);
-  gulp.watch([path.watch.js], js);
-  gulp.watch([path.watch.img], images);
-}
-
-// Cleaning tasks
-function clean(params) {
-  return del(path.clean);
-}
-
-// Build tasks
-let build = gulp.series(clean, gulp.parallel(js, css, html, images));
-let watch = gulp.parallel(build, watchFiles, browserSync);
-
-// Exports a task that calls a function
-exports.js = js;
-exports.css = css;
-exports.html = html;
-exports.build = build;
-exports.watch = watch;
-exports.default = watch;
+gulp.task("default", gulp.series("build", "watch"));
